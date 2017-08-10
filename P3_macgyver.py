@@ -15,131 +15,116 @@ class Case:
     Main class that defines case objects for the maze.
     Each case is identified with its coordinates.
     Each case is either a corridor or a wall.
-    A case can also be an item.
-    A case can also contain the exit.
-    A case can also contain the starting point for 
-    MacGyver.
     """
-
-    """ Object initialization with info extracted from the
-    dataframe """
-    def __init__(self, coordinates_init, specification):
+    def __init__(self, coordinates_init, characteristic):
         self.coordinates = coordinates_init
-        self.specification = specification
+        self.characteristic = characteristic
 
-        
 class Item:
-    """
-    Class of object that creates itself depending on the map
-    """
-    def __init__(self, name):
-        self.name = name
-        self.position = []
-
-    # Function that returns tuple of valid coordinates for item
-
-
+    ITEM_INDEX = {
+        str(1): "Seringue",
+        str(2): "Anestésiant",
+        str(3): "Pistolet"
+    }        
 
 class MacGyver:
     """
     Special class that defines the player on the maze
     MacGyver is an object with methods that will 
     allow it to :
-      - scan the position where he is at, looking for
-        items to collect
-      - assess if the guard (and therefore the exit) is
-      - move to another case in the maze 
+        - play the game (i.e. move from case to case and assess
+          whether he reached the exit or not)
+        - scan the case he is about to go to
+        - collect items
+        - assess if the guard (and therefore the exit) 
     """
     
     def __init__(self, starting_position):
-        # player coordinates are type list to modify position in the game
+        # player coordinates are type list to modify position during the game
         self.loc = [starting_position[0], starting_position[1]]
+        # initiating his list of items to collect
         self.item_list = []
 
+    # Returns what the intended next case for the move (based on input) is
+    # nx and ny correspond to the next move input for axis and ordinate
+    def looks_up_next_case(self, nx, ny, map_df):
+        return map_df[self.loc[0] + nx][self.loc[1] + ny ]
+
+    # Updates the player's position
+    def moves(self, nx, ny):
+        self.loc[0] += nx
+        self.loc[1] += ny
+        print(self.loc)
+
+    """
+    Calls the moves method, updates the player's item list with item found
+    Updates the map dataframe to remove the item location and turns it into
+    a regular corridor case
+    """
+    def collects_item(self, nx, ny, map_df):
+        self.moves(nx,ny)
+        # After moving, player's position the item's are the same
+        item_collected = map_df[self.loc[0]][self.loc[1]]
+        # We update the player item_list
+        self.item_list.append(item_collected)
+        print("item {} has been collected !".format(item_collected))
+        # WARNING : here, row index / ordinate is called before column / axis
+        # the map_df is updated and we replace the case as a corridor case
+        map_df.set_value(self.loc[1], self.loc[0], "o")
+        print(map_df)
+
+    """
+    The function takes the dataframe as input to read map, which is the
+    game board dataframe
+        - if the next case from current position is "o" or "s",
+          we move to the next case
+        - if the next case is one of the 3 items "1", "2" or "3",
+          we collect the item (and move to it with same method) 
+        - if the next case is the exit, this is the end game and the 
+          end of the method
+        - otherwise, it's a wall, player gets a notification (or should
+          be an exception raised) and we stay on same position 
+          waiting for another input
+    Simpler version with inputs as follow :
+        - "j" to go up 
+        - "k" to go left 
+        - "l" to go down
+        - "m" to go right
+    """
     def plays(self, map_df):
-        """
-        The function takes the dataframe as input to read map, which is the
-        game board dataframe
-            - if the next case on map is "o" or "s", we move
-            - else prints that this is a wall and we don't move
-        Simpler version with inputs as follow :
-            - "j" to go up 
-            - "k" to go left 
-            - "l" to go down
-            - "m" to go right
-        We compare player's position to the map intended move
-        As long as the player doesn't hit the exit, we keep playing
-        """
         end_game = False
         while end_game == False:
             move = input()
-            # we set those variable for readibility 
-            col = self.loc[0]
-            row = self.loc[1]
+            # the following specifies each move based on input
             if move.lower() == "j":
-                """
-                If the next case is a corridor or starting point:
-                  - we update the position
-                """
-                if map_df[col][row - 1] in "os":
-                    self.loc[1] -= 1
-                    print(self.loc)
-                elif map_df[col][row - 1] in str(123):
-                    self.loc[1] -= 1
-                    print(self.loc)
-                    self.item_list.append(map_df[col][row - 1])
-                    print(self.item_list)
-                    map_df.set_value(row - 1, col, "o")
-                    print(map_df)
-                elif map_df[col][row - 1] in "z":
-                    return end_game == True
-                else:
-                    print("This is a wall, try agin")
+                nx = 0
+                ny = -1
             elif move.lower() == "k":
-                if map_df[col - 1][row] in "os":
-                    self.loc[0] -= 1
-                    print(self.loc)
-                elif map_df[col - 1][row] in str(123):
-                    self.loc[0] -= 1
-                    print(self.loc)
-                    self.item_list.append(map_df[col - 1][row])
-                    print(self.item_list)
-                    map_df.set_value(row, col - 1, "o")
-                    print(map_df)
-                elif map_df[col - 1][row] in "z":
-                    return end_game == True
-                else:
-                    print("this is a wall, try again")
+                nx = -1
+                ny = 0
             elif move.lower() == "l":
-                if map_df[col][row + 1] in "os":
-                    self.loc[1] += 1
-                    print(self.loc)
-                elif map_df[col][row + 1] in str(123):
-                    self.loc[1] += 1
-                    print(self.loc)
-                    self.item_list.append(map_df[col][row + 1])
-                    print(self.item_list)
-                    map_df.set_value(row + 1, col, "o")
-                    print(map_df)
-                elif map_df[col][row + 1] in "z":
-                    return end_game == True
-                else:
-                    print("this is a wall, try again")
+                nx = 0
+                ny = +1
             elif move.lower() == "m":
-                if map_df[col + 1][row] in "os":
-                    self.loc[0] += 1
-                    print(self.loc)
-                elif map_df[col + 1][row] in str(123):
-                    self.loc[1] += 1
-                    print(self.loc)
-                    self.item_list.append(map_df[col + 1][row])
-                    print(self.item_list)
-                    map_df.set_value(row, col + 1, "o")
-                    print(map_df)
-                elif map_df[col + 1][row] in "z":
-                    return end_game == True
-                else:
-                    print("this is a wall, try again")
+                nx = +1
+                ny = 0
+            else:
+                nx = 0 
+                ny = 0
+            # Identifies what the next intended case is
+            ncase = self.looks_up_next_case(nx, ny, map_df)
+            # Based on what the next case is, we call different actions
+            if ncase in "os":
+                self.moves(nx, ny)
+            elif ncase in str(123):
+                # collecting the item will also move player's position
+                self.collects_item(nx, ny, map_df)
+            elif ncase in "z":
+                # Exit is found, we exit the plays method
+                return end_game == True
+            else:
+                # It has to be a wall, so we do nothing
+                print("This is a wall")
 
 
 ####################
@@ -148,13 +133,15 @@ class MacGyver:
 
 def game_board_building():
     """
-    Creating a dataframe from the CSV file
-    CSV file contains the map :
-    On the map "x" is a wall, "o" a corridor
-    "s" the starting point and "z" the exit
-    The function returns a dataframe object
+    Creating a dataframe from the CSV file which contains the initial maze map
+    On the map "x" is a wall, "o" a corridor, "s" the starting point and "z" 
+    the exit
+    The function returns a dataframe object we call map_df
     """
     print("Game board loading...")
+    # Currently, the maze is modified with items already registered
+    # going only up, enables to test items collection
+    # other directions enables to test walls and regular moves
     map_df = pd.read_csv("data/maze1.csv", header=None, delim_whitespace=True)
     return map_df    
 
@@ -172,7 +159,8 @@ def generate_items_in(map_df):
             x_item = rd.randint(1, 13)
             y_item = rd.randint(1, 13)
         else:
-            # Warning, set_value first selects row then col
+            # Warning, set_value first selects ordinate then axit
+            # We update the map_df with item index
             map_df.set_value(y_item, x_item, str(i))
             print(x_item, y_item)
     return map_df
@@ -195,8 +183,8 @@ def main():
     entries of the dataframe
     The following is most likely for display purposes. We create the objects.
     We initialize every case of the game board.
-    And if the specification of the case is "s" or "z" we initialize the 
-    player and the exit
+    And if the specification of the case is "s" or "z" (currently z is regular
+    case
     """
     for x, y in [(x,y) for x in range(15) for y in range(15)]:
         if map_df[x][y] == "s":
@@ -206,16 +194,16 @@ def main():
         else:
             # We should store each object in a list to represent the boardgame
             game_board_case = Case((x,y), map_df[x][y])
-        #print("La case {} a pour specification {}".format(game_board_case.coordinates, game_board_case.specification))
     print("Ready to play !!!, press j to go up, k to go left, l to go down and m to go left")
-    """
-    Let's play, player moves until he finds the exit
-    """
+    # Player moves until he finds the exit
     player.plays(map_df)
+    # Assessing how many items were collected before exiting
     tranquilizer_gun = len(player.item_list)
     if tranquilizer_gun < 3:
+        # Game over, player dies
         print("You didn't collect all the tranquilizer gun items, the guard killed you")
     else:
+        # Game over, player wins
         print("You've finished the game ! Congratulations")
 
 
