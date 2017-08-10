@@ -37,15 +37,7 @@ class Item:
         self.position = []
 
     # Function that returns tuple of valid coordinates for item
-    def generate(self, map_df):
-        is_ok = False
-        while is_ok == False:
-            x_item = rd.randint(1, 13)
-            y_item = rd.randint(1, 13)
-            if map_df[x_item][y_item] in "o":
-                print(map_df[x_item][y_item])
-                self.position = [x_item, y_item]
-                return is_ok == True
+
 
 
 class MacGyver:
@@ -61,10 +53,10 @@ class MacGyver:
     
     def __init__(self, starting_position):
         # player coordinates are type list to modify position in the game
-        self.position = [starting_position[0], starting_position[1]]
+        self.loc = [starting_position[0], starting_position[1]]
         self.item_list = []
 
-    def move(self, map_df):
+    def plays(self, map_df):
         """
         The function takes the dataframe as input to read map, which is the
         game board dataframe
@@ -76,43 +68,114 @@ class MacGyver:
             - "l" to go down
             - "m" to go right
         We compare player's position to the map intended move
-        As long as the player doesn't hit the exit, we keep moving
+        As long as the player doesn't hit the exit, we keep playing
         """
         end_game = False
         while end_game == False:
             move = input()
+            # we set those variable for readibility 
+            col = self.loc[0]
+            row = self.loc[1]
             if move.lower() == "j":
-                if map_df[self.position[0]][self.position[1] - 1] in "os":
-                    self.position[1] -= 1
-                    print(self.position) # print for test puposes
-                elif map_df[self.position[0]][self.position[1] - 1] in "z":
+                """
+                If the next case is a corridor or starting point:
+                  - we update the position
+                """
+                if map_df[col][row - 1] in "os":
+                    self.loc[1] -= 1
+                    print(self.loc)
+                elif map_df[col][row - 1] in str(123):
+                    self.loc[1] -= 1
+                    print(self.loc)
+                    self.item_list.append(map_df[col][row - 1])
+                    print(self.item_list)
+                    map_df.set_value(row - 1, col, "o")
+                    print(map_df)
+                elif map_df[col][row - 1] in "z":
                     return end_game == True
                 else:
-                    print("this is a wall, try again")
+                    print("This is a wall, try agin")
             elif move.lower() == "k":
-                if map_df[self.position[0] - 1][self.position[1]] in "os":
-                    self.position[0] -= 1
-                    print(self.position)
-                elif map_df[self.position[0] - 1][self.position[1]] in "z":
+                if map_df[col - 1][row] in "os":
+                    self.loc[0] -= 1
+                    print(self.loc)
+                elif map_df[col - 1][row] in str(123):
+                    self.loc[0] -= 1
+                    print(self.loc)
+                    self.item_list.append(map_df[col - 1][row])
+                    print(self.item_list)
+                    map_df.set_value(row, col - 1, "o")
+                    print(map_df)
+                elif map_df[col - 1][row] in "z":
                     return end_game == True
                 else:
                     print("this is a wall, try again")
             elif move.lower() == "l":
-                if map_df[self.position[0]][self.position[1] + 1] in "os":
-                    self.position[1] += 1
-                    print(self.position)
-                elif map_df[self.position[0]][self.position[1] + 1] in "z":
+                if map_df[col][row + 1] in "os":
+                    self.loc[1] += 1
+                    print(self.loc)
+                elif map_df[col][row + 1] in str(123):
+                    self.loc[1] += 1
+                    print(self.loc)
+                    self.item_list.append(map_df[col][row + 1])
+                    print(self.item_list)
+                    map_df.set_value(row + 1, col, "o")
+                    print(map_df)
+                elif map_df[col][row + 1] in "z":
                     return end_game == True
                 else:
                     print("this is a wall, try again")
             elif move.lower() == "m":
-                if map_df[self.position[0] + 1][self.position[1]] in "os":
-                    self.position[0] += 1
-                    print(self.position)
-                elif map_df[self.position[0] + 1][self.position[1]] in "z":
+                if map_df[col + 1][row] in "os":
+                    self.loc[0] += 1
+                    print(self.loc)
+                elif map_df[col + 1][row] in str(123):
+                    self.loc[1] += 1
+                    print(self.loc)
+                    self.item_list.append(map_df[col + 1][row])
+                    print(self.item_list)
+                    map_df.set_value(row, col + 1, "o")
+                    print(map_df)
+                elif map_df[col + 1][row] in "z":
                     return end_game == True
                 else:
                     print("this is a wall, try again")
+
+
+####################
+## Game functions ##
+####################
+
+def game_board_building():
+    """
+    Creating a dataframe from the CSV file
+    CSV file contains the map :
+    On the map "x" is a wall, "o" a corridor
+    "s" the starting point and "z" the exit
+    The function returns a dataframe object
+    """
+    print("Game board loading...")
+    map_df = pd.read_csv("data/maze1.csv", header=None, delim_whitespace=True)
+    return map_df    
+
+def generate_items_in(map_df):
+    """
+    Random distribution of items
+    Function takes the map and returns map with items randomly 
+    distributed on valid positions
+    """
+    for i in range(1, 4):
+        x_item = rd.randint(1, 13)
+        y_item = rd.randint(1, 13)
+        # Reshuffle until we land on a corridor position
+        while map_df[x_item][y_item] not in "o":
+            x_item = rd.randint(1, 13)
+            y_item = rd.randint(1, 13)
+        else:
+            # Warning, set_value first selects row then col
+            map_df.set_value(y_item, x_item, str(i))
+            print(x_item, y_item)
+    return map_df
 
 
 ###################
@@ -121,34 +184,12 @@ class MacGyver:
 
 
 def main():
-
-    """
-    Creating a dataframe from the CSV file
-    """
-    print("Game board loading...")
-    game_board_df = pd.read_csv("data/maze1.csv", header=None, delim_whitespace=True)
-    print(game_board_df)
-    """
-    Random distribution of items
-    We modify the map i don't really need objects item.
-    """
-    item_1 = Item("1")
-    item_2 = Item("2")
-    item_3 = Item("3")
-    print(item_1.name)
-    item_1.generate(game_board_df)
-    item_2.generate(game_board_df)
-    item_3.generate(game_board_df)
-    print("item_1 est à la position {}".format(item_1.position))
-    print("item_2 est à la position {}".format(item_2.position))
-    print("item_3 est à la position {}".format(item_3.position))
-        # must update the game_board_df so following items don't overlap
-    # Warning : set_value takes row before col !
-    game_board_df.set_value(item_1.position[1], item_1.position[0], item_1.name)
-    game_board_df.set_value(item_2.position[1], item_2.position[0], item_2.name)
-    game_board_df.set_value(item_3.position[1], item_3.position[0], item_3.name)
-    print(game_board_df)
-
+    
+    # We initialize the dataframe map that contains the maze information
+    map_df = game_board_building()
+    map_df = generate_items_in(map_df)
+    print(map_df)
+    
     """
     List comprehension allowing to perform loops nested and run through all
     entries of the dataframe
@@ -158,20 +199,25 @@ def main():
     player and the exit
     """
     for x, y in [(x,y) for x in range(15) for y in range(15)]:
-        if game_board_df[x][y] == "s":
+        if map_df[x][y] == "s":
             player = MacGyver((x, y))
             # We should store each object in a list to represent the boardgame
-            game_board_case = Case((x,y), game_board_df[x][y])
+            game_board_case = Case((x,y), map_df[x][y])
         else:
             # We should store each object in a list to represent the boardgame
-            game_board_case = Case((x,y), game_board_df[x][y])
+            game_board_case = Case((x,y), map_df[x][y])
         #print("La case {} a pour specification {}".format(game_board_case.coordinates, game_board_case.specification))
-    print("Ready to play !!!")
+    print("Ready to play !!!, press j to go up, k to go left, l to go down and m to go left")
     """
     Let's play, player moves until he finds the exit
     """
-    # player.move(game_board_df)
-    # print("You've finished the game ! Congratulations")
+    player.plays(map_df)
+    tranquilizer_gun = len(player.item_list)
+    if tranquilizer_gun < 3:
+        print("You didn't collect all the tranquilizer gun items, the guard killed you")
+    else:
+        print("You've finished the game ! Congratulations")
+
 
 if __name__ == "__main__":
     main()
