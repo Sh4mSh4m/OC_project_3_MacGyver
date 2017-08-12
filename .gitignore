@@ -1,2 +1,4 @@
 ENV
+
+P3_macgyver_backup_gui.py
 P3_macgyver_backup_no_gui.py

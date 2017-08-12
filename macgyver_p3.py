@@ -133,7 +133,6 @@ class MacGyver:
                 elif event.type == QUIT or \
                     event.type == KEYDOWN and event.key == K_ESCAPE:
                     end_game = True
-                    return main_switch is True
                 else:
                     nx = 0
                     ny = 0
@@ -156,7 +155,7 @@ class MacGyver:
                     end_game = True
                 else:
                     # It has to be a wall, so we do nothing
-                    print("This is a wall")
+                    pass
 
     def looks_up_next_case(self, nx, ny, map_df):
         """
@@ -169,6 +168,8 @@ class MacGyver:
               window, player_img, player_mov):
         """
         Updates the player's position, updates the sprite position
+        We apply a floor tile before on current position before 
+        moving on to the next case
         """
         game_board_img = pyg.image.load("img/floor.png").convert()
         window.blit(game_board_img, (self.loc[0] * 40 + g_border_x, \
@@ -252,15 +253,11 @@ def main():
     # We initialize the dataframe map that contains the maze information
     map_df = game_board_building()
     map_df = generate_items_in(map_df)
-    print(map_df)
-
     # Initializing game window
     pyg.init()
     window = pyg.display.set_mode((800, 700))
-
     # Starting loop for the window to remain on until escaping the game
     main_switch = False
-
     while main_switch is False:
         # loads and convert the picture
         background_img = pyg.image.load("img/background.jpg").convert()
