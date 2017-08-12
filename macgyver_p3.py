@@ -1,11 +1,13 @@
+"""
+MACGYVER OPENCLASSROOMS PROJECT 3 by hieu2d@gmail.com
+"""
 #! /usr/bin/env python3
 # coding: utf-8
 
-import pandas as pd
 import random as rd
+import pandas as pd
 import pygame as pyg
 from pygame.locals import *
-
 
 
 ###################
@@ -24,6 +26,9 @@ class Case:
         self.characteristic = characteristic
 
     def displays_gb(self, window, g_border_x, g_border_y):
+        """
+        Method doesn't return anything but add elements to game window
+        """
         if self.characteristic in "so123":
             game_board_img = pyg.image.load("img/floor.png").convert()
         elif self.characteristic == "z":
@@ -36,11 +41,15 @@ class Case:
 
 
 class Item(Case):
-
-    def __init__(self, coordinates_init, characteristic):
-        super().__init__(coordinates_init, characteristic)
+    """
+    Subclass of case to manage display of dedicated item sprites
+    """
 
     def displays_gb(self, window, g_border_x, g_border_y):
+        """
+        Method doesn't return anything but add elements to game window
+        Dedicated to the Item class
+        """
         if self.characteristic in "1":
             game_board_img = pyg.image.load("img/seringue.png")\
                                             .convert_alpha()
@@ -72,39 +81,41 @@ class MacGyver:
         # initiating his list of items to collect
         self.item_list = []
 
-    # Manages player sprite on graphic interface
-    def appears(self, window, g_border_x, g_border_y):
+    def appears(self, g_border_x, g_border_y):
+        """
+        Manages player sprite on graphic interface
+        """
         player_img = pyg.image.load("img/player.png").convert_alpha()
         player_mov = player_img.get_rect()
         # player sprite moved to initial position
         player_mov = player_mov.move(self.loc[0] * 40 + g_border_x, \
-        	                         self.loc[1] * 40 + g_border_y)
+                                     self.loc[1] * 40 + g_border_y)
         # window.blit(player_img, player_mov)
         pyg.display.flip()
         return player_img, player_mov
 
-    """
-    The function takes the dataframe as input to read map, which is the
-    game board dataframe
-        - if the next case from current position is "o" or "s",
-          we move to the next case
-        - if the next case is one of the 3 items "1", "2" or "3",
-          we collect the item (and move to it with same method) 
-        - if the next case is the exit, this is the end game and the 
-          end of the method
-        - otherwise, it's a wall, player gets a notification (or should
-          be an exception raised) and we stay on same position 
-          waiting for another input
-    Simpler version with inputs as follow :
-        - "j" to go up 
-        - "k" to go left 
-        - "l" to go down
-        - "m" to go right
-    """
     def plays(self, map_df, g_border_x, g_border_y,
-    	         window, player_img, player_mov):
+              window, player_img, player_mov):
+        """
+        The function takes the dataframe as input to read map, which is the
+        game board dataframe
+            - if the next case from current position is "o" or "s",
+              we move to the next case
+            - if the next case is one of the 3 items "1", "2" or "3",
+              we collect the item (and move to it with same method)
+            - if the next case is the exit, this is the end game and the
+              end of the method
+            - otherwise, it's a wall, player gets a notification (or should
+              be an exception raised) and we stay on same position
+              waiting for another input
+        Simpler version with inputs as follow :
+            - "j" to go up
+            - "k" to go left
+            - "l" to go down
+            - "m" to go right
+        """
         end_game = False
-        while end_game == False:
+        while end_game is False:
             for event in pyg.event.get():
                 # the following specifies each move based on input
                 if event.type == KEYDOWN and event.key == K_UP:
@@ -122,7 +133,7 @@ class MacGyver:
                 elif event.type == QUIT or \
                     event.type == KEYDOWN and event.key == K_ESCAPE:
                     end_game = True
-                    return main_switch == True
+                    return main_switch is True
                 else:
                     nx = 0
                     ny = 0
@@ -147,44 +158,46 @@ class MacGyver:
                     # It has to be a wall, so we do nothing
                     print("This is a wall")
 
-    # Returns what the intended next case for the move (based on input) is
-    # nx and ny correspond to the next move input for axis and ordinate
     def looks_up_next_case(self, nx, ny, map_df):
+        """
+        Returns what the intended next case for the move (based on input) is
+        nx and ny correspond to the next move input for axis and ordinate
+        """
         return map_df[self.loc[0] + nx][self.loc[1] + ny]
 
-    # Updates the player's position, updates the sprite position
     def moves(self, nx, ny, g_border_x, g_border_y,
-    	         window, player_img, player_mov):
+              window, player_img, player_mov):
+        """
+        Updates the player's position, updates the sprite position
+        """
         game_board_img = pyg.image.load("img/floor.png").convert()
         window.blit(game_board_img, (self.loc[0] * 40 + g_border_x, \
                                      self.loc[1] * 40 + g_border_y))
         self.loc[0] += nx
         self.loc[1] += ny
-        print(self.loc)
         player_mov = player_mov.move(nx * 40, ny * 40)
         window.blit(player_img, player_mov)
         pyg.display.flip()
         return player_img, player_mov
 
-    """
-    Calls the moves method, updates the player's item list with item found
-    Updates the map dataframe to remove the item location and turns it into
-    a regular corridor case
-    """
+
     def collects_item(self, nx, ny, g_border_x, g_border_y, map_df,
-                         window, player_img, player_mov):
+                      window, player_img, player_mov):
+        """
+        Calls the moves method, updates the player's item list with item found
+        Updates the map dataframe to remove the item location and turns it into
+        a regular corridor case
+        """
         player_img, player_mov = self.moves(nx, ny,
-                                               g_border_x, g_border_y,
-                                               window, player_img, player_mov)
+                                            g_border_x, g_border_y,
+                                            window, player_img, player_mov)
         # After moving, player's position the item's are the same
         item_collected = map_df[self.loc[0]][self.loc[1]]
         # We update the player item_list
         self.item_list.append(item_collected)
-        print("item {} has been collected !".format(item_collected))
         # WARNING : here, row index / ordinate is called before column / axis
         # the map_df is updated and we replace the case as a corridor case
         map_df.set_value(self.loc[1], self.loc[0], "o")
-        print(map_df)
         return player_img, player_mov
 
 
@@ -200,9 +213,6 @@ def game_board_building():
     The function returns a dataframe object we call map_df
     """
     print("Game board loading...")
-    # Currently, the maze is modified with items already registered
-    # going only up, enables to test items collection
-    # other directions enables to test walls and regular moves
     map_df = pd.read_csv("data/maze1.csv", header=None, delim_whitespace=True)
     return map_df
 
@@ -219,11 +229,9 @@ def generate_items_in(map_df):
         while map_df[x_item][y_item] not in "o":
             x_item = rd.randint(1, 13)
             y_item = rd.randint(1, 13)
-        else:
-            # Warning, set_value first selects ordinate then axit
-            # We update the map_df with item index
-            map_df.set_value(y_item, x_item, str(i))
-            print(x_item, y_item)
+        # Warning, set_value first selects ordinate then axit
+        # We update the map_df with item index
+        map_df.set_value(y_item, x_item, str(i))
     return map_df
 
 
@@ -233,7 +241,14 @@ def generate_items_in(map_df):
 
 
 def main():
-
+    """
+    3 main parts: 
+        - Map loading
+        - Display initializing with Pygame
+        - Board game display construction based on map
+        - Loop for the game
+        - End game management depending on items collected
+    """
     # We initialize the dataframe map that contains the maze information
     map_df = game_board_building()
     map_df = generate_items_in(map_df)
@@ -246,7 +261,7 @@ def main():
     # Starting loop for the window to remain on until escaping the game
     main_switch = False
 
-    while main_switch == False:
+    while main_switch is False:
         # loads and convert the picture
         background_img = pyg.image.load("img/background.jpg").convert()
         # sticks "background" on the window
@@ -256,13 +271,11 @@ def main():
         # each sprite is 40 pixels wide and we start away from border
         g_border_x = 150
         g_border_y = 90
-        """
-        List comprehension allowing to perform loops nested and run through all
-        entries of the dataframe
-        We initialize every case of the game board.
-        And if the specification of the case is "s" or "z"
-        Only player and items are separate items
-        """
+        # List comprehension allowing to perform loops nested and run through all
+        # entries of the dataframe
+        # We initialize every case of the game board.
+        # And if the specification of the case is "s" or "z"
+        # Only player and items are separate items
         for x, y in [(x, y) for x in range(15) for y in range(15)]:
             if map_df[x][y] == "s":
                 game_board_case = Case((x, y), map_df[x][y])
@@ -270,8 +283,7 @@ def main():
                 # Player is displayed on top of corridor, so created after
                 player = MacGyver((x, y))
                 # The appears method must return both objects to be used later
-                player_img, player_mov = player.appears(window,
-                                                            g_border_x, g_border_y)
+                player_img, player_mov = player.appears(g_border_x, g_border_y)
             elif map_df[x][y] in str(123):
                 game_board_case = Case((x, y), map_df[x][y])
                 game_board_case.displays_gb(window, g_border_x, g_border_y)
@@ -284,18 +296,18 @@ def main():
         print("Ready to play !!!")
         # Player moves until he finds the exit (second loop in the game)
         player.plays(map_df, g_border_x, g_border_y,
-                        window, player_img, player_mov)
+                     window, player_img, player_mov)
         # Assessing how many items were collected before exiting
         tranquilizer_gun = len(player.item_list)
         if tranquilizer_gun < 3:
             # Game over, player dies
-            print("You didn't collect all the tranquilizer gun items, \
-            	  the guard killed you")
+            print("You didn't collect all the tranquilizer gun items.")
+            print("The guard killed you... Try again")
             main_switch = True
         else:
             # Game over, player wins
-            print("You've finished the game ! \
-            	  Congratulations, press Q to quit")
+            print("You've finished the game !")
+            print("Congratulations :D")
             main_switch = True
 
 if __name__ == "__main__":
